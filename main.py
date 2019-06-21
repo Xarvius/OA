@@ -1,20 +1,23 @@
-import datetime
+import asyncio
 import os
 
 import discord
 from discord import InvalidArgument
-
+import datetime
 from discord.ext import commands
 
 import config
 from discord.utils import get
+
+from file_serivce import load_reminders, update_reminders
 from on_message_handler import voice_binds
+from remind import Remind
 
 CONFIG = config.load_json('config.json')
 binds = config.load_json('binds.json')
 players = {}
 server = {}
-token = os.environ['TOKEN']
+reminders = load_reminders()
 
 bot = commands.Bot(command_prefix='&')
 
@@ -105,6 +108,82 @@ async def on_message(message):
     await bot.process_commands(message)
 
 
+@bot.command(pass_context=True)
+async def remind_add(ctx):
+    """Adds new reminder, only leaders are allowed"""
+    if not check_user_permissions(ctx.message.author.id):
+        pass
+    date_format = '%d/%m/%Y %H:%M'
+    message = ctx.message.content
+    data = message.split(' ')
+
+    if len(data) < 4:
+        await bot.send_message(ctx.message.channel, "Niepoprawna ilosc parametrow: data godzina wiadomosc")
+        return
+
+    date_str = data[1] + ' ' + data[2]
+    try:
+        date_obj = datetime.datetime.strptime(date_str, date_format)
+    except ValueError as ve:
+        await bot.send_message(ctx.message.channel, "Niepoprawny format daty, poprawny format to: " + date_format)
+        return
+
+    message = ' '.join(data[3:])
+
+    remind = Remind(date_obj, message)
+    reminders.append(remind)
+    update_reminders(reminders)
+    await bot.send_message(ctx.message.channel, 'Dodano przypomnienie: ' + str(remind))
+
+
+@bot.command(pass_context=True)
+async def remind_list(ctx):
+    """Show all reminders"""
+    message = '\n\n'.join(str(reminder) for reminder in reminders)
+    await bot.send_message(ctx.message.channel, 'PRZYPOMNIENIA:\n\n' + message)
+
+
+@bot.command(pass_context=True)
+async def remind_remove(ctx):
+    """Remove reminder, only leaders are allowed"""
+    if not check_user_permissions(ctx.message.author.id):
+        pass
+    id = ctx.message.content.split(' ')[1]
+    for remind in reminders:
+        if remind.uuid == id:
+            reminders.remove(remind)
+            update_reminders(reminders)
+            await bot.send_message(ctx.message.channel, 'Usunieto przypomnienie: ' + id)
+            return
+    await bot.send_message(ctx.message.channel, 'Nie znaleziono przypomnienia: ' + id)
+
+
+async def check_reminders():
+    await bot.wait_until_ready()
+    channel = bot.get_channel("493171873274789898")
+    while not bot.is_closed:
+        updated = False
+        for remind in reminders:
+            # print(remind.date - datetime.datetime.now())
+            # print(remind.displayed)
+            if remind.date < datetime.datetime.now():  # remind date is after now
+                reminders.remove(remind)
+                updated = True
+            elif remind.displayed == 3 and (remind.date - datetime.datetime.now()) < datetime.timedelta(0, 1800, 0):
+                await bot.send_message(channel, remind.display())
+                remind.displayed = remind.displayed - 1
+            elif remind.displayed == 2 and (remind.date - datetime.datetime.now()) < datetime.timedelta(0, 900, 0):
+                await bot.send_message(channel, remind.display())
+                remind.displayed = remind.displayed - 1
+            elif remind.displayed == 1 and (remind.date - datetime.datetime.now()) < datetime.timedelta(0, 5, 0):
+                await bot.send_message(channel, remind.display())
+                reminders.remove(remind)
+                updated = True
+        if updated:
+            update_reminders(reminders)
+        await asyncio.sleep(5)
+
+
 def check_user_permissions(user_id):
     if user_id in CONFIG["BOT_PERMISSIONS"]:
         return True
@@ -119,4 +198,13 @@ def get_log_channel(msg_server):
     return
 
 
-bot.run(token)
+@bot.command(pass_context=True)
+async def clear(ctx):
+    channel = ctx.message.channel
+    async for msg in bot.logs_from(channel):
+        if not msg.pinned:
+            await bot.delete_message(msg)
+
+
+bot.loop.create_task(check_reminders())
+bot.run(os.environ['TOKEN'])
