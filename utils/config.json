@@ -1,6 +1,12 @@
 {
-  "BOT_PERMISSIONS": "255087166693048320, 208360194910978059, 316673825330692096,362962318813822977, 310155083486724109",
-  "log_channel_name": "przedsionek",
+  "BOT_PERMISSIONS": [
+    255087166693048320,
+    208360194910978059,
+    316673825330692096,
+    362962318813822977,
+    310155083486724109
+  ],
+  "log_channel_name": 420249080476991511,
   "MESSAGE": {
     "msg_priv": "Witamy na serwerze gildii Ostrza [OA]. Jestem SUPER-OSTRZE!!! :) \nZapraszamy na kanał głosowy rozmowy-wstepne w celu przeprowadzenia krótkiego rozeznania z liderami \nJeśli nikogo nie ma na kanale, nie bój się napisać do <@!362962318813822977> lub <@!208360194910978059> ",
     "msg_trial": "Witamy w gildii! Na wstępie prosimy o zajrzenie na discorda do kanałów tekstowych #informacje oraz #aktualnosci. Znajdziesz tam regulamin i link do arkusza. Przy proszeniu o dostęp do arkusza, koniecznie wyślij PW do <@!208360194910978059> z mailem, z którego wysłałeś prośbę. Wymagamy uzupełnienia danych w arkuszu, jak i akceptacji regulaminu. Niedostosowanie się do tych punktów do czasu cyklicznego przeglądu gildii zaowocuje wydaleniem. "

@@ -4,7 +4,7 @@ import uuid
 
 class Remind:
     def __init__(self, date, msg, remind_id=None):
-        self.uuid = remind_id if remind_id else str(uuid.uuid4().fields[-1])[:3]
+        self.uuid = int(remind_id) if remind_id else int(str(uuid.uuid4().fields[-1])[:3])
         self.date = date
         self.msg = msg
         self.displayed = self.set_displayed()
