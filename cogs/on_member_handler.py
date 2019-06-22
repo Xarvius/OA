@@ -1,5 +1,6 @@
 import datetime
 
+import discord
 from discord.ext import commands
 from discord.utils import get
 
@@ -16,7 +17,7 @@ class MemberHandler(commands.Cog):
     async def on_member_join(self, member):
         msg_priv = self.config["MESSAGE"]["msg_priv"]
         await member.send(msg_priv)
-        role = get(member.server.roles, name="Gość")
+        role = get(member.guild.roles, name="Gość")
         return await member.add_roles(role)
 
     @commands.Cog.listener()
@@ -34,7 +35,7 @@ class MemberHandler(commands.Cog):
     async def on_member_remove(self, member):
         log_channel = self.client.get_channel(self.config["log_channel_name"])
         descriptionmsg = '%s wyszedł z serwera.' % member.mention
-        embed = self.client.Embed(title="WYJŚCIE Z SERWERA [LOG]", description=descriptionmsg, color=0x00ff00,
+        embed = discord.Embed(title="WYJŚCIE Z SERWERA [LOG]", description=descriptionmsg, color=0x00ff00,
                                   timestamp=datetime.datetime.utcnow())
         embed.set_author(name=member, url=embed.Empty, icon_url=member.avatar_url)
         await log_channel.send(embed=embed)
